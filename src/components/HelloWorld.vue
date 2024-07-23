@@ -1,20 +1,28 @@
 <template>
   <body>
-    <div class="container">
-      <h1>Historiador Virtual</h1>
-      <form id="question-form">
-        <label for="question">Pergunta:</label>
-        <input type="text" v-model="form.pergunta" id="question" name="question" required>
-        <button type="button" @click="runIA">Perguntar</button>
-      </form>
-      <textarea v-model="form.resposta" id="answer" rows="10" cols="30">
-      
-      </textarea>
+    <div class="chat-container">
+      <div class="chat-header">
+        <h1>Historiador Virtual</h1>
+      </div>
+      <div class="chat-body">
+        <div v-for="(message, index) in messages" :key="index" :class="message.role">
+          <p>{{ message.text }}</p>
+        </div>
+      </div>
+      <div class="chat-footer">
+        <form id="question-form" @submit.prevent="runIA">
+          <input type="text" v-model="form.pergunta" id="question" name="question" required
+            placeholder="Digite sua pergunta...">
+          <button type="submit">Perguntar</button>
+        </form>
+      </div>
     </div>
   </body>
 </template>
 
+
 <script>
+
 const {
   GoogleGenerativeAI,
   HarmCategory,
@@ -40,22 +48,26 @@ const generationConfig = {
 
 export default {
   name: 'HelloWorld',
-  data(){
-    return{
-      form:{
-        pergunta:"",
-        resposta:""
-      }
+  data() {
+    return {
+      form: {
+        pergunta: "",
+        resposta: ""
+      },
+      messages: []
     };
   },
 
   methods: {
-
     async runIA() {
+      const userMessage = {
+        role: 'user-message',
+        text: this.form.pergunta
+      };
+      this.messages.push(userMessage);
+
       const chatSession = model.startChat({
         generationConfig,
-        // safetySettings: Adjust safety settings
-        // See https://ai.google.dev/gemini-api/docs/safety-settings
         history: [
           {
             role: "user",
@@ -63,78 +75,110 @@ export default {
               { text: "gemini, você é um historiador e irá falar sobre qualquer fato ou acontecimento histórico que a pessoa te pedir, e irá responder a todas as perguntas sobre o fato histórico pedido, nas próximas conversas você poderá falar apenas sobre isso\n" },
             ],
           },
-          
         ],
       });
 
       const result = await chatSession.sendMessage(this.form.pergunta);
-      this.form.resposta=result.response.text();
-      console.log(result.response.text());
+      const botMessage = {
+        role: 'bot-message',
+        text: result.response.text()
+      };
+      this.messages.push(botMessage);
+
+      this.form.pergunta = "";
     }
   }
 };
-
-
-
-
-// run();
 </script>
+
 
 <style scoped>
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
   margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
 }
 
-.container {
-  background-color: #fff;
-  padding: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 5px;
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: -60px;
+  margin-left: -7px;
+  margin-right: -8px;
+  margin-bottom: -60px;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+.chat-header {
+  background-color: #333;
+  color: white;
+  padding: 10px;
   text-align: center;
 }
 
-h1 {
-  margin-bottom: 20px;
-}
-
-form {
+.chat-body {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f7f7f7;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
-label {
-  margin-bottom: 10px;
-}
-
-input {
+.user-message,
+.bot-message {
   padding: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  max-width: 60%;
+  word-wrap: break-word;
+}
+
+.user-message {
+  background-color: #e0e0e0;
+  color: black;
+  align-self: flex-end;
+}
+
+.bot-message {
+  background-color: #444;
+  color: white;
+  align-self: flex-start;
+}
+
+.chat-footer {
+  display: flex;
+  padding: 10px;
+  background-color: #fff;
+  border-top: 1px solid #ccc;
+}
+
+#question-form {
+  display: flex;
+  width: 100%;
+}
+
+#question {
+  flex: 1;
+  padding: 10px;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 5px 0 0 5px;
+  outline: none;
 }
 
 button {
   padding: 10px 20px;
-  background-color: #007bff;
-  color: #fff;
+  background-color: #333;
+  color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 0 5px 5px 0;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #0056b3;
-}
-
-#answer {
-  margin-top: 20px;
-  font-weight: bold;
+  background-color: #555;
 }
 </style>
