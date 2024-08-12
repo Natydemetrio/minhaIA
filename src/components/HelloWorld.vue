@@ -22,6 +22,8 @@
 
 
 <script>
+import axios from 'axios';
+
 
 const {
   GoogleGenerativeAI,
@@ -58,6 +60,16 @@ export default {
     };
   },
 
+   async created() {
+    // Carregar mensagens do backend na inicialização
+    try {
+      const response = await axios.get('http://localhost:3000/messages');
+      this.messages = response.data;
+    } catch (error) {
+      console.error('Erro ao carregar mensagens:', error);
+    }
+  },
+
   methods: {
     async runIA() {
       const userMessage = {
@@ -78,17 +90,21 @@ export default {
         ],
       });
 
+    
       const result = await chatSession.sendMessage(this.form.pergunta);
       const botMessage = {
         role: 'bot-message',
         text: result.response.text()
       };
       this.messages.push(botMessage);
+      await axios.post('http://localhost:3000/messages', botMessage);
 
       this.form.pergunta = "";
     }
   }
 };
+
+
 </script>
 
 
