@@ -60,15 +60,19 @@ export default {
     };
   },
 
-   async created() {
+  async created() {
     // Carregar mensagens do backend na inicialização
     try {
       const response = await axios.get('http://localhost:3000/messages');
-      this.messages = response.data;
+      this.messages = response.data.map(({
+        role: 'bot-message',
+        // text: item.pergunta
+      }));
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
     }
   },
+
 
   methods: {
     async runIA() {
@@ -90,14 +94,17 @@ export default {
         ],
       });
 
-    
+
       const result = await chatSession.sendMessage(this.form.pergunta);
       const botMessage = {
         role: 'bot-message',
         text: result.response.text()
       };
       this.messages.push(botMessage);
-      await axios.post('http://localhost:3000/messages', botMessage);
+      await axios.post('http://localhost:3000/messages', {
+        pergunta: this.form.pergunta,
+        resposta: botMessage.text
+      });
 
       this.form.pergunta = "";
     }
