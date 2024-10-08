@@ -3,6 +3,7 @@
     <div class="chat-container">
       <div class="chat-header">
         <h1>Historiador Virtual</h1>
+        <p>Criadora: Nathaly Gabrieli Goergen Demetrio</p>
       </div>
       <div class="chat-body">
         <div v-for="(message, index) in messages" :key="index" :class="message.role">
