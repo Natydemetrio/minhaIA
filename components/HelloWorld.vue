@@ -3,6 +3,7 @@
     <div class="chat-container">
       <div class="chat-header">
         <h1>Historiador Virtual</h1>
+        <p>Criadora: Nathaly Gabrieli Goergen Demetrio</p>
       </div>
       <div class="chat-body">
         <div v-for="(message, index) in messages" :key="index" :class="message.role">
@@ -17,7 +18,6 @@
         </form>
       </div>
     </div>
-    <p>Criadora: Nathaly Gabrieli Goergen Demetrio</p>
   </body>
 </template>
 
@@ -64,7 +64,7 @@ export default {
   async created() {
     // Carregar mensagens do backend na inicialização
     try {
-      const response = await axios.get('http://localhost:3000/messages');
+      const response = await axios.get('http://minhaia-1.onrender.com/messages');
       this.messages = response.data.map(({
         role: 'bot-message',
         // text: item.pergunta
@@ -102,7 +102,7 @@ export default {
         text: result.response.text()
       };
       this.messages.push(botMessage);
-      await axios.post('http://localhost:3000/messages', {
+      await axios.post('http://minhaia-1.onrender.com/messages', {
         pergunta: this.form.pergunta,
         resposta: botMessage.text
       });
