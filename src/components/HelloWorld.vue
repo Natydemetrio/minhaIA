@@ -64,7 +64,7 @@ export default {
   async created() {
     // Carregar mensagens do backend na inicialização
     try {
-      const response = await axios.get('http://minhaia-1.onrender.com/messages');
+      const response = await axios.get('https://api-backend-chatbot.onrender.com/messages');
       this.messages = response.data.map(({
         role: 'bot-message',
         // text: item.pergunta
@@ -102,7 +102,7 @@ export default {
         text: result.response.text()
       };
       this.messages.push(botMessage);
-      await axios.post('http://minhaia-1.onrender.com/messages', {
+      await axios.post('https://api-backend-chatbot.onrender.com/messages', {
         pergunta: this.form.pergunta,
         resposta: botMessage.text
       });
