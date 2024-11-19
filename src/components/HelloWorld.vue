@@ -21,33 +21,14 @@
   </body>
 </template>
 
-
 <script>
 import axios from 'axios';
 
+// Inicializar o modelo dentro do componente, para garantir que o ciclo de vida do Vue seja respeitado
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const {
-  GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold,
-} = require("@google/generative-ai");
-
-HarmCategory;
-HarmBlockThreshold;
 const apiKey = "AIzaSyDQdnjmdZSvSQVIzsKLUFRPXRBaQzo0xWk";
-const genAI = new GoogleGenerativeAI(apiKey);
-
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
-});
-
-const generationConfig = {
-  temperature: 1,
-  topP: 0.95,
-  topK: 64,
-  maxOutputTokens: 8192,
-  responseMimeType: "text/plain",
-};
+let genAI;
 
 export default {
   name: 'HelloWorld',
@@ -62,18 +43,25 @@ export default {
   },
 
   async created() {
+    // Inicializar o genAI somente quando o componente for criado
+    genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Configuração do modelo
+    this.model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash-8b",
+    });
+
     // Carregar mensagens do backend na inicialização
     try {
       const response = await axios.get('https://api-backend-chatbot.onrender.com/messages');
-      this.messages = response.data.map(({
-        role: 'bot-message',
-        // text: item.pergunta
+      this.messages = response.data.map(item => ({
+        role: item.role || 'bot-message', // Garantir que role seja definido
+        text: item.pergunta || item.resposta || 'Mensagem sem conteúdo'
       }));
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
     }
   },
-
 
   methods: {
     async runIA() {
@@ -83,38 +71,49 @@ export default {
       };
       this.messages.push(userMessage);
 
-      const chatSession = model.startChat({
-        generationConfig,
+      // Configuração da conversa inicial
+      const chatSession = this.model.startChat({
+        generationConfig: {
+          temperature: 1,
+          topP: 0.95,
+          topK: 40,
+          maxOutputTokens: 8192,
+          responseMimeType: "text/plain"
+        },
         history: [
           {
             role: "user",
             parts: [
-              { text: "gemini, você é um historiador e irá falar sobre qualquer fato ou acontecimento histórico que a pessoa te pedir, e irá responder a todas as perguntas sobre o fato histórico pedido, nas próximas conversas você poderá falar apenas sobre isso\n" },
-            ],
-          },
+              { text: "gemini, você é um historiador e irá falar sobre qualquer fato ou acontecimento histórico..." }
+            ]
+          }
         ],
       });
 
+      // Enviar a pergunta e receber a resposta
+      try {
+        const result = await chatSession.sendMessage(this.form.pergunta);
+        const botMessage = {
+          role: 'bot-message',
+          text: result.response.text()
+        };
+        this.messages.push(botMessage);
+        
+        // Salvar pergunta e resposta no backend
+        await axios.post('https://api-backend-chatbot.onrender.com/messages', {
+          pergunta: this.form.pergunta,
+          resposta: botMessage.text
+        });
 
-      const result = await chatSession.sendMessage(this.form.pergunta);
-      const botMessage = {
-        role: 'bot-message',
-        text: result.response.text()
-      };
-      this.messages.push(botMessage);
-      await axios.post('https://api-backend-chatbot.onrender.com/messages', {
-        pergunta: this.form.pergunta,
-        resposta: botMessage.text
-      });
-
-      this.form.pergunta = "";
+        // Limpar o campo de pergunta
+        this.form.pergunta = "";
+      } catch (error) {
+        console.error('Erro ao comunicar com a AI:', error);
+      }
     }
   }
 };
-
-
 </script>
-
 
 <style scoped>
 body {

@@ -13,6 +13,7 @@
     "body-parser": "^1.20.2",
     "core-js": "^3.8.3",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "mongodb": "4.1",
     "mongoose": "^8.5.2",
@@ -51,4 +52,3 @@
     "not ie 11"
   ]
 }
-
