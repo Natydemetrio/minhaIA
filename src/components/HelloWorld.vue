@@ -24,7 +24,6 @@
 <script>
 import axios from 'axios';
 
-// Inicializar o modelo dentro do componente, para garantir que o ciclo de vida do Vue seja respeitado
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const apiKey = "AIzaSyDQdnjmdZSvSQVIzsKLUFRPXRBaQzo0xWk";
@@ -41,79 +40,67 @@ export default {
       messages: []
     };
   },
-
   async created() {
-    // Inicializar o genAI somente quando o componente for criado
+    // Inicializa o modelo (caso utilize uma API de IA, substitua por sua instância real)
     genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Configuração do modelo
-    this.model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-8b",
-    });
-
-    // Carregar mensagens do backend na inicialização
     try {
+      this.model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash-8b",
+    }); // Substitua isso pela instância real do seu modelo
+      console.log('Modelo carregado com sucesso');
+      
+      // Recupera o histórico de conversas do usuário
       const response = await axios.get('https://api-backend-chatbot.onrender.com/messages');
       this.messages = response.data.map(item => ({
         role: item.role || 'bot-message', // Garantir que role seja definido
         text: item.pergunta || item.resposta || 'Mensagem sem conteúdo'
       }));
     } catch (error) {
-      console.error('Erro ao carregar mensagens:', error);
+      console.error('Erro ao carregar o modelo ou mensagens:', error);
     }
   },
-
   methods: {
-    async runIA() {
-      const userMessage = {
-        role: 'user-message',
-        text: this.form.pergunta
-      };
-      this.messages.push(userMessage);
+  async runIA() {
+    if (!this.model) {
+      console.error('Modelo não foi carregado corretamente.');
+      return;
+    }
 
-      // Configuração da conversa inicial
-      const chatSession = this.model.startChat({
-        generationConfig: {
-          temperature: 1,
-          topP: 0.95,
-          topK: 40,
-          maxOutputTokens: 8192,
-          responseMimeType: "text/plain"
-        },
-        history: [
-          {
-            role: "user",
-            parts: [
-              { text: "gemini, você é um historiador e irá falar sobre qualquer fato ou acontecimento histórico..." }
-            ]
-          }
-        ],
+    // Adiciona a mensagem do usuário ao histórico
+    const userMessage = {
+      role: 'user-message',
+      text: this.form.pergunta
+    };
+    this.messages.push(userMessage);
+
+    try {
+      // Envia a pergunta para o backend
+      const response = await axios.post('https://api-backend-chatbot.onrender.com/messages', {
+        pergunta: this.form.pergunta
       });
 
-      // Enviar a pergunta e receber a resposta
-      try {
-        const result = await chatSession.sendMessage(this.form.pergunta);
-        const botMessage = {
-          role: 'bot-message',
-          text: result.response.text()
-        };
-        this.messages.push(botMessage);
-        
-        // Salvar pergunta e resposta no backend
-        await axios.post('https://api-backend-chatbot.onrender.com/messages', {
-          pergunta: this.form.pergunta,
-          resposta: botMessage.text
-        });
+      // A resposta do backend será a resposta da IA
+      const botMessage = {
+        role: 'bot-message',
+        text: response.data // Resposta recebida do backend
+      };
+      this.messages.push(botMessage);
 
-        // Limpar o campo de pergunta
-        this.form.pergunta = "";
-      } catch (error) {
-        console.error('Erro ao comunicar com a AI:', error);
-      }
+      // Salva a pergunta e resposta no backend
+      await axios.post('https://api-backend-chatbot.onrender.com/messages', {
+        pergunta: this.form.pergunta,
+        resposta: botMessage.text
+      });
+
+      this.form.pergunta = ""; // Limpa a pergunta após o envio
+    } catch (error) {
+      console.error('Erro ao comunicar com a IA:', error);
     }
   }
+}
 };
 </script>
+
 
 <style scoped>
 body {
@@ -203,5 +190,4 @@ button {
 
 button:hover {
   background-color: #555;
-}
-</style>
+}</style>

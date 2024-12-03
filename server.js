@@ -204,8 +204,8 @@ app.post('/messages', async (req, res) => {
     // Adiciona a pergunta do usuário ao histórico
     const mensagens = [...historico, { texto: pergunta, papel: 'usuario' }];
     
-    // Aqui você pode chamar a IA para gerar a resposta, exemplo:
-    const resposta = 'Resposta da IA aqui'; // Substitua com a resposta da sua IA
+    // Chamada à IA para gerar a resposta
+    const resposta = await obterRespostaDaIA(pergunta); // Função para obter a resposta da IA
 
     // Adiciona a resposta da IA ao histórico
     mensagens.push({ texto: resposta, papel: 'bot' });
@@ -219,6 +219,18 @@ app.post('/messages', async (req, res) => {
     res.status(500).send('Erro ao processar a mensagem');
   }
 });
+
+// Função para obter a resposta da IA (exemplo de integração)
+const obterRespostaDaIA = async (pergunta) => {
+  // Aqui você pode integrar com a API da IA para gerar uma resposta real.
+  try {
+    const respostaIA = "Aqui você pode substituir pela lógica de chamada à IA";
+    return respostaIA;
+  } catch (error) {
+    console.error("Erro ao chamar a IA:", error);
+    return "Desculpe, não consegui gerar uma resposta.";
+  }
+};
 
 // Rota para listar perguntas
 app.get('/messages', async (req, res) => {
@@ -244,6 +256,7 @@ app.get('/acessos', async (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
 });
+
 
 
 // const express = require('express');
